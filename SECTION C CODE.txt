@@ -1,0 +1,12 @@
+CREATE TABLE detailed_table (
+actor_name			VARCHAR(30),
+movie_count			SMALLINT,
+total_gross_sales		NUMERIC(7, 2),
+average_gross_sales_per_movie	NUMERIC(5, 2),
+total_rentals			SMALLINT
+);
+
+CREATE TABLE summary_table (
+actor_name			VARCHAR(30),
+average_gross_sales_per_movie	NUMERIC(5, 2)
+);

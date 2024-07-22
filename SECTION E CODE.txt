@@ -1,0 +1,20 @@
+CREATE OR REPLACE FUNCTION update_summary_table()
+	RETURN TRIGGER
+	LANGUAGE plpgsql
+	AS
+	$$
+	BEGIN
+	DELETE FROM summary_table;
+	INSERT INTO summary_table
+	SELECT actor_name, average_gross_sales_per_movie FROM detailed_table;
+	RETURN NEW;
+	END;
+	$$;
+
+	
+
+CREATE TRIGGER update_to_detailedTB
+	AFTER INSERT
+	ON detailed_table
+	FOR EACH STATEMENT
+	EXECUTE PROCEDURE update_summary_table();

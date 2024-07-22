@@ -1,0 +1,41 @@
+CREATE OR REPLACE PROCEDURE refresh()
+LANGUAGE plpgsql
+AS 
+$$
+BEGIN
+
+DELETE FROM summary_table;
+DELETE FROM detailed_table;
+
+INSERT INTO detailed_table
+SELECT concatCWW(actor.first_name, actor.last_name) AS actor_name,temptab.movie_count, temptab.total_gross_sales, temptab.average_gross_sale_per_movie, tempy.total_rentals
+	FROM
+	(SELECT CAST(SUM(mathtab.total_gross_sales) AS NUMERIC(7, 2)) AS total_gross_sales, CAST (COUNT(film_actor.actor_id) AS SMALLINT) AS movie_count, film_actor.actor_id,
+		CAST((SUM(mathtab.total_gross_sales) / COUNT(film_actor.actor_id)) AS NUMERIC(5, 2)) AS average_gross_sales_per_movie FROM
+		(SELECT SUM(tab2.amount) AS total_gross_sales, tab2.film_id FROM
+			(SELECT payment.amount, tab1.film_id
+				FROM payment
+				JOIN
+				(SELECT inventory.inventory_id, rental.rental_id, inventory.film_id FROM inventory
+					JOIN rental
+					ON inventory.inventory_id = rental.inventory_id) AS tab1
+				ON tab1.rental_id = payment.rental_id) AS tab2
+			GROUP BY tab2.film_id
+			ORDER BY tab2.film_id) as mathtab,
+		film_actor
+		WHERE mathtab.film_id = film_actor.film_id
+		GROUP BY film_actor.actor_id) AS temptab,
+		actor
+		JOIN
+		(SELECT CAST(COUNT(film_actor.actor_id) AS SMALLINT) AS total_rentals, film_actor.actor_id FROM rental, inventory, film_actor
+			WHERE rental.inventory_id = inventory.inventory_id AND
+			inventory.film_id = film_actor.film_id
+			GROUP BY film_actor.actor_id) AS tempy
+		ON actor.actor_id = tempy.actor_id
+		WHERE temptab.actor_id = actor.actor_id
+		ORDER BY temptab.average_gross_sales_per_movie DESC;
+		
+		INSERT INTO summary_table
+		SELECT actor_name, average_gross_sales_per_movie FROM detailed_table;
+END;
+$$;

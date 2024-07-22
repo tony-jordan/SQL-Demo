@@ -1,0 +1,14 @@
+CREATE OR REPLACE FUNCTION concatCWW(
+	str1 VARCHAR(20),
+	str2 VARCHAR(20)
+	)
+	RETURNS VARCHAR(30)
+	LANGUAGE plpgsql
+	AS
+	$$
+	DECLARE actor_name VARCHAR(30);
+	BEGIN
+		SELECT str || ' ' || str2 INTO actor_name;
+		RETURN actor_name;
+	END;
+	$$	
